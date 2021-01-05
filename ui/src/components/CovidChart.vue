@@ -410,8 +410,8 @@ export default {
     },
 
     async getData() {
-      var url = "https://sample-moonmile.azurewebsites.net/api/NHKCovid"
-      // var url = "http://localhost:7071/api/NHKCovid"
+      var url = process.env.VUE_APP_NHK_COVID_API_URL
+      console.log( url )
       var res = await axios.get(url);
 
       var { labels, datasets } = this.makeCases( res, "2020-10-01", "2021-12-31", this.value )
