@@ -410,8 +410,8 @@ export default {
     },
 
     async getData() {
-      // var url = "https://sample-moonmile.azurewebsites.net/api/WorldCovid"
-      var url = "http://localhost:7071/api/WorldCovid"
+      var url = "https://sample-moonmile.azurewebsites.net/api/WorldCovid"
+      // var url = "http://localhost:7071/api/WorldCovid"
       var res = await axios.get(url);
 
       var data = this.makeCases( res, "2020-10-01", "2021-12-31", this.value )

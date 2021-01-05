@@ -16,7 +16,7 @@ namespace CrowlFunc
 {
     public static class NHKCovid
     {
-        [FunctionName("NHKCovid")]
+        [FunctionName("NHKCovidRead")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
@@ -57,20 +57,12 @@ namespace CrowlFunc
                     }
                     // ソートしておく
                     data = data.OrderBy(t => t.LocationId).ThenBy(t => t.Date).ToList();
-
-                    Stopwatch stopWatch = new Stopwatch();
-                    stopWatch.Start();
-
                     // 週平均を計算
                     calcCasesAve(data);
                     // 週単位Rt値を計算
                     calcCasesRt(data);
                     // 週単位Rt平均値を計算
                     calcCasesRtAve(data);
-
-                    stopWatch.Stop();
-                    TimeSpan ts = stopWatch.Elapsed;
-                    log.LogInformation("time " + ts.ToString());
 
                     return new OkObjectResult(new { result = data });
                 }
@@ -80,6 +72,82 @@ namespace CrowlFunc
                 return new NotFoundResult();
             }
         }
+
+        [FunctionName("NHKCovid")]
+        public static async Task<IActionResult> RunRead(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+            [Blob("covid/japan.json", FileAccess.Read)] Stream jsonfile,
+            ILogger log)
+        {
+            log.LogInformation("called NHKCovid");
+            var sr = new StreamReader(jsonfile);
+            var json = await sr.ReadToEndAsync();
+            return new OkObjectResult(json);
+        }
+
+        [FunctionName("NHKCovidTimerOne")]
+        public static async Task<IActionResult> RunTimerOne(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+            [Blob("covid/japan.json", FileAccess.Write)] Stream jsonfile,
+            ILogger log)
+        {
+            await NHKCovid.RunTimer(null, jsonfile, log);
+            return new OkObjectResult("japan.json " + DateTime.Now.ToString());
+        }
+
+        [FunctionName("NHKCovidTimer")]
+        public static async Task RunTimer([TimerTrigger("0 5 * * * *")] TimerInfo myTimer,
+            [Blob("covid/japan.json", FileAccess.Write)] Stream jsonfile,
+            ILogger log)
+
+        {
+            log.LogInformation("called NHKCovidTimer");
+            var url = "https://www3.nhk.or.jp/n-data/opendata/coronavirus/nhk_news_covid19_prefectures_daily_data.csv";
+            var cl = new HttpClient();
+            // 1行ずつ読み込み JSON 形式に変換
+            var res = await cl.GetAsync(url);
+            var data = new List<Covid>();
+            using (var st = new StreamReader(await res.Content.ReadAsStreamAsync()))
+            {
+                // タイトルは読み飛ばし
+                st.ReadLine();
+                while (true)
+                {
+                    string line = st.ReadLine();
+                    if (string.IsNullOrEmpty(line)) break;
+                    var items = line.Split(",");
+                    if (items.Length >= 7)
+                    {
+                        var it = new Covid()
+                        {
+                            Date = DateTime.Parse(items[0]),
+                            LocationId = int.Parse(items[1]),
+                            Location = items[2],
+                            Cases = int.Parse(items[3]),
+                            CasesTotal = int.Parse(items[3]),
+                            Deaths = int.Parse(items[3]),
+                            DeathsTotal = int.Parse(items[3]),
+                        };
+                        data.Add(it);
+                    }
+                }
+                // ソートしておく
+                data = data.OrderBy(t => t.LocationId).ThenBy(t => t.Date).ToList();
+                // 週平均を計算
+                calcCasesAve(data);
+                // 週単位Rt値を計算
+                calcCasesRt(data);
+                // 週単位Rt平均値を計算
+                calcCasesRtAve(data);
+            }
+            var json = JsonConvert.SerializeObject(new { result = data });
+            var writer = new StreamWriter(jsonfile);
+            writer.Write(json);
+            writer.Close();
+            // return new OkObjectResult("save json " + DateTime.Now.ToString());
+        }
+
+
         /// <summary>
         /// 週平均を計算
         /// </summary>
@@ -220,16 +288,26 @@ namespace CrowlFunc
     }
     public class Covid
     {
+        [JsonProperty("date")]
         public DateTime Date { get; set; }
+        [JsonProperty("locationId")]
         public int LocationId { get; set; }
+        [JsonProperty("location")]
         public string Location { get; set; }
+        [JsonProperty("cases")]
         public int Cases { get; set; }
+        [JsonProperty("casesTotal")]
         public int CasesTotal { get; set; }
+        [JsonProperty("deaths")]
         public int Deaths { get; set; }
+        [JsonProperty("deathsTotal")]
         public int DeathsTotal { get; set; }
 
+        [JsonProperty("casesAverage")]
         public float CasesAverage { get; set; }   // 週移動平均
+        [JsonProperty("casesRt")]
         public float CasesRt { get; set; }        // 週単位Rt値 = 続く1週間の感染者数平均 / 当日感染者数  
+        [JsonProperty("casesRtAverage")]
         public float CasesRtAverage { get; set; }     // Rt値の週移動平均
     }
 }
