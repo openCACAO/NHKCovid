@@ -217,20 +217,19 @@ namespace CrowlFunc
 #endif
         }
 
-        public class Covid
-        {
-            public DateTime Date { get; set; }
-            public int LocationId { get; set; }
-            public string Location { get; set; }
-            public int Cases { get; set; }
-            public int CasesTotal { get; set; }
-            public int Deaths { get; set; }
-            public int DeathsTotal { get; set; }
+    }
+    public class Covid
+    {
+        public DateTime Date { get; set; }
+        public int LocationId { get; set; }
+        public string Location { get; set; }
+        public int Cases { get; set; }
+        public int CasesTotal { get; set; }
+        public int Deaths { get; set; }
+        public int DeathsTotal { get; set; }
 
-            public float CasesAverage { get; set; }   // TˆÚ“®•½‹Ï
-            public float CasesRt { get; set; }        // T’PˆÊRt’l = ‘±‚­1TŠÔ‚ÌŠ´õÒ”•½‹Ï / “–“úŠ´õÒ”  
-            public float CasesRtAverage { get; set; }     // Rt’l‚ÌTˆÚ“®•½‹Ï
-
-        }
+        public float CasesAverage { get; set; }   // TˆÚ“®•½‹Ï
+        public float CasesRt { get; set; }        // T’PˆÊRt’l = ‘±‚­1TŠÔ‚ÌŠ´õÒ”•½‹Ï / “–“úŠ´õÒ”  
+        public float CasesRtAverage { get; set; }     // Rt’l‚ÌTˆÚ“®•½‹Ï
     }
 }
