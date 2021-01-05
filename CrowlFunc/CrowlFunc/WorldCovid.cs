@@ -16,7 +16,7 @@ namespace CrowlFunc
 {
     public static class WorldCovid
     {
-        [FunctionName("WorldCovid")]
+        [FunctionName("WorldCovidRead")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
@@ -105,6 +105,25 @@ namespace CrowlFunc
             }
         }
 
+        [FunctionName("WorldCovid")]
+        public static async Task<IActionResult> RunRead(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+            [Blob("covid/world.json", FileAccess.Read)] Stream jsonfile,
+            ILogger log)
+        {
+            log.LogInformation("called WorldCovid");
+            var sr = new StreamReader(jsonfile);
+            var json = await sr.ReadToEndAsync();
+            return new OkObjectResult(json);
+        }
+
+        /// <summary>
+        /// 強制的に CSV をダウンロードする
+        /// </summary>
+        /// <param name="req"></param>
+        /// <param name="jsonfile"></param>
+        /// <param name="log"></param>
+        /// <returns></returns>
         [FunctionName("WorldCovidTimerOne")]
         public static async Task<IActionResult> RunTimerOne(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
@@ -115,6 +134,13 @@ namespace CrowlFunc
             return new OkObjectResult("world.json " + DateTime.Now.ToString());
         }
 
+        /// <summary>
+        /// タイマートリガーで1時間に1回ダウンロードする
+        /// </summary>
+        /// <param name="myTimer"></param>
+        /// <param name="jsonfile"></param>
+        /// <param name="log"></param>
+        /// <returns></returns>
         [FunctionName("WorldCovidTimer")]
         public static async Task RunTimer([TimerTrigger("0 5 * * * *")] TimerInfo myTimer,
             [Blob("covid/world.json", FileAccess.Write)] Stream jsonfile,
