@@ -320,33 +320,33 @@ export default {
      */
     makeCasesFuture(res,start_date,end_date,locations) {
 
-      var sdate = Date.parse(start_date)
-      var edate = Date.parse(end_date)
-      var datasets = []
-      var labels = []
-      var i = 0;
+        var sdate = Date.parse(start_date)
+        var edate = Date.parse(end_date)
+        var datasets = []
+        var labels = []
+        var i = 0;
 
-      console.log( edate )
+        console.log( edate )
 
-      locations.forEach(location => {
+        locations.forEach(location => {
         // 最終日を取得
         var lastdate = null 
         var last = null
         res.data.result.forEach(el => {
-          if ( el.location == location ) {
+            if ( el.location == location ) {
             var dt = Date.parse( el.date )
             if ( el.casesRt > 0.0 ) {
-              if ( lastdate < dt ) {
+                if ( lastdate < dt ) {
                 lastdate = dt 
                 last = el
-              }
-              if ( sdate <= dt ) {
+                }
+                if ( sdate <= dt ) {
                 dt = new Date(dt)
                 dt = dt.getFullYear() + "/" + (dt.getMonth()+1) + "/" + dt.getDate() 
                 if ( i == 0 ) labels.push( dt )
-              }
+                }
             }
-          }
+            }
         })
         console.log( last );
 
@@ -354,59 +354,59 @@ export default {
         var data2 = [];
         // 実測値を集計
         res.data.result.forEach(el => {
-          if ( el.location == location ) {
+            if ( el.location == location ) {
             var dt = Date.parse( el.date )
             if ( el.casesRt > 0.0 ) {
-              if ( sdate <= dt ) {
+                if ( sdate <= dt ) {
                 data.push( el.cases )
                 data2.push( el.casesRtAverage )
-              }
+                }
             }
-          }
+            }
         })
         // 予測値を計算
         var rt = last.casesRtAverage ;
         for ( var j=1; j<=40; j++ ) {
-          // 過去7日間の cases と Rt から予測 cases を計算する
-          var len = data.length ;
-          var cases = (
-          data[ len-7 ] * data2[ len-7 ] + 
-          data[ len-6 ] * data2[ len-6 ] +
-          data[ len-5 ] * data2[ len-5 ] + 
-          data[ len-4 ] * data2[ len-4 ] + 
-          data[ len-3 ] * data2[ len-3 ] + 
-          data[ len-2 ] * data2[ len-2 ] + 
-          data[ len-1 ] * data2[ len-1 ] ) / 7.0 ;
-          data.push( Math.floor(cases))
-          data2.push( rt );
+            // 過去7日間の cases と Rt から予測 cases を計算する
+            var len = data.length ;
+            var cases = (
+            data[ len-7 ] * data2[ len-7 ] + 
+            data[ len-6 ] * data2[ len-6 ] +
+            data[ len-5 ] * data2[ len-5 ] + 
+            data[ len-4 ] * data2[ len-4 ] + 
+            data[ len-3 ] * data2[ len-3 ] + 
+            data[ len-2 ] * data2[ len-2 ] + 
+            data[ len-1 ] * data2[ len-1 ] ) / 7.0 ;
+            data.push( Math.floor(cases))
+            data2.push( rt );
 
-          var dt = new Date(Date.parse( last.date ))
-          dt.setDate(dt.getDate() + j);
-          dt = dt.getFullYear() + "/" + (dt.getMonth()+1) + "/" + dt.getDate() 
-          if ( i == 0 ) labels.push( dt )
+            var dt = new Date(Date.parse( last.date ))
+            dt.setDate(dt.getDate() + j);
+            dt = dt.getFullYear() + "/" + (dt.getMonth()+1) + "/" + dt.getDate() 
+            if ( i == 0 ) labels.push( dt )
         }
 
         var dataset = 
-          {
+            {
             label: location,
             fill: false,
             borderColor: i >= this.colors.length? "rgba(200,200,200,0.5)": this.colors[i].n,
             data: data,
             yAxisID: "y-axis-1", 
-          }
+            }
         var dataset2 = 
-          {
+            {
             label: location + "週平均Rt",
             fill: false,
             borderColor: i >= this.colors.length? "rgba(100,100,100,0.5)": this.colors[i].ave,
             data: data2,
             yAxisID: "y-axis-2", 
-          }
+            }
         datasets.push( dataset )
         datasets.push( dataset2 )
         i++;
-      })
-      return { labels3: labels, datasets3: datasets };
+        })
+        return { labels3: labels, datasets3: datasets };
     },
 
     async getData() {
